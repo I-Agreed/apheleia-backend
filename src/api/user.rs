@@ -17,6 +17,7 @@ use serde::Serialize;
 
 pub(crate) fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(get_user)
+        .service(get_users)
         .service(add_user)
         .service(add_user_role)
         .service(delete_user_role)
@@ -24,7 +25,7 @@ pub(crate) fn config(cfg: &mut web::ServiceConfig) {
 }
 
 #[derive(Clone, Debug, Serialize)]
-#[cfg_attr(test, derive(Eq, PartialEq, Deserialize))]
+#[cfg_attr(test, derive(Eq, PartialEq, serde::Deserialize))]
 struct GetUserResponse {
     roles: Vec<Id<id::Role>>,
 }
@@ -48,6 +49,12 @@ async fn get_user(_: User, user_id: web::Path<User>, pool: web::Data<DbPool>) ->
         .await?;
     let response = GetUserResponse { roles };
     Result::Ok(HttpResponse::Ok().json(response))
+}
+
+#[get("/users")]
+async fn get_users(_: User, pool: web::Data<DbPool>) -> impl Responder {
+    let users = user::table.select(user::id).load::<User>(&pool).await?;
+    Result::Ok(HttpResponse::Ok().json(users))
 }
 
 #[post("/users")]
@@ -197,6 +204,22 @@ mod tests {
             .to_request();
         let resp = test::call_service(&app, req).await;
         assert_eq!(resp.status(), 200);
+
+        let req = TestRequest::post()
+            .uri("/users")
+            .insert_header((header::AUTHORIZATION, "Bearer 5678"))
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
+
+        let req = TestRequest::get()
+            .uri("/users")
+            .insert_header((header::AUTHORIZATION, "Bearer 5678"))
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), 200);
+        let users = test::read_body_json::<Vec<i32>, _>(resp).await;
+        assert_eq!(users, vec![1234, 5678]);
     }
 
     #[tokio::test(flavor = "multi_thread")]
