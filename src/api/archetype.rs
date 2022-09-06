@@ -7,7 +7,7 @@ use crate::{
 
 use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
 use diesel::QueryDsl;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 pub(crate) fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(get_archetype)
@@ -44,6 +44,11 @@ struct AddArchetype {
     schema: serde_json::Value,
 }
 
+#[derive(Clone, Debug, Serialize)]
+struct AddArchetypeResponse {
+    pub(crate) id: Id<id::Archetype>,
+}
+
 #[post("/archetypes")]
 async fn add_archetype(
     user: User,
@@ -52,8 +57,10 @@ async fn add_archetype(
 ) -> impl Responder {
     if user.is_admin_of(&pool, request.subject_area).await? {
         let request = request.into_inner();
+        let id = Id::new();
+
         let archetype = model::Archetype {
-            id: Id::<id::Archetype>::new(),
+            id,
             name: request.name,
             subject_area: request.subject_area,
             schema: request.schema,
@@ -63,9 +70,9 @@ async fn add_archetype(
             .values(archetype)
             .execute(&pool)
             .await?;
-        Result::Ok(HttpResponse::Ok())
+        Result::Ok(HttpResponse::Ok().json(AddArchetypeResponse { id }))
     } else {
-        Result::Ok(HttpResponse::Forbidden())
+        Result::Ok(HttpResponse::Forbidden().finish())
     }
 }
 

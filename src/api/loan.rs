@@ -43,6 +43,7 @@ struct GetLoans {
 }
 
 #[derive(Copy, Clone, Debug, Deserialize)]
+#[serde(rename_all = "lowercase")]
 enum GetLoansFilter {
     Loanee,
     Loaner,

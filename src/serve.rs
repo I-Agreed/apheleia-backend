@@ -5,8 +5,7 @@ use crate::{
     Error, FuncReturn, Result,
 };
 
-use actix_http::header::{HeaderName, HeaderValue};
-use actix_web::{dev::Service, middleware, web::Data, App, HttpServer};
+use actix_web::{middleware, web::Data, App, HttpServer};
 use diesel::{
     pg::PgConnection,
     r2d2::{ConnectionManager, Pool},
