@@ -13,7 +13,7 @@ use crate::{
 use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
 use chrono::{DateTime, Utc};
 use diesel::{query_dsl::JoinOnDsl, ExpressionMethods, QueryDsl};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 pub(crate) fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(get_loan)
@@ -94,6 +94,11 @@ struct AddLoan {
     date_due: Option<DateTime<Utc>>,
 }
 
+#[derive(Clone, Debug, Serialize)]
+struct AddLoanResponse {
+    id: Id<id::Loan>,
+}
+
 #[post("/loans")]
 async fn add_loan(
     user: User,
@@ -105,9 +110,10 @@ async fn add_loan(
         .await?
     {
         let request = request.into_inner();
+        let id = Id::new();
 
         let loan = model::Loan {
-            id: Id::new(),
+            id,
             return_requested: false,
             item: request.item,
             loaner: user,
@@ -122,9 +128,9 @@ async fn add_loan(
             .values(loan)
             .execute(&pool)
             .await?;
-        Result::Ok(HttpResponse::Ok())
+        Result::Ok(HttpResponse::Ok().json(AddLoanResponse { id }))
     } else {
-        Result::Ok(HttpResponse::Forbidden())
+        Result::Ok(HttpResponse::Forbidden().finish())
     }
 }
 
