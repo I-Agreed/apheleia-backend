@@ -9,6 +9,7 @@ lto = "fat"
 codegen-units = 1
 
 [dependencies]
+actix-cors = "0.6"
 tokio = { version = "1.18", features = ["rt-multi-thread", "macros"] }
 chrono = { version = "0.4", features = ["serde"] }
 actix-web = "4.0"

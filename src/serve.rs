@@ -42,24 +42,16 @@ where
     drop(conn);
 
     let server = HttpServer::new(move || {
+        let cors = actix_cors::Cors::default()
+            .allow_any_origin()
+            .send_wildcard();
         App::new()
             .app_data(Data::new(db_pool.clone()))
             .app_data(Data::new(root))
             .app_data(config.clone())
             .wrap(middleware::Compress::default())
             .wrap(middleware::Logger::default())
-            // Add CORS policy
-            .wrap_fn(|req, srv| {
-                let fut = srv.call(req);
-                async {
-                    let mut res = fut.await?;
-                    res.headers_mut().insert(
-                        HeaderName::from_static("access-control-allow-origin"),
-                        HeaderValue::from_static("*"),
-                    );
-                    Ok(res)
-                }
-            })
+            .wrap(cors)
             .configure(crate::api::config)
     })
     .bind("0.0.0.0:8000")
