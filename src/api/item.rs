@@ -61,9 +61,10 @@ async fn add_item(
         .await?
     {
         let request = request.into_inner();
+        let id = Id::new();
 
         let item = model::Item {
-            id: Id::new(),
+            id,
             note: request.note,
             archetype: request.archetype,
             archetype_data: request.archetype_data,
@@ -74,9 +75,9 @@ async fn add_item(
             .execute(&pool)
             .await?;
 
-        Result::Ok(HttpResponse::Ok())
+        Result::Ok(HttpResponse::Ok().json(AddItemResponse { id }))
     } else {
-        Result::Ok(HttpResponse::Forbidden())
+        Result::Ok(HttpResponse::Forbidden().finish())
     }
 }
 
