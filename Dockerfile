@@ -39,4 +39,4 @@ RUN apt-get install libpq-dev -y
 # copy build artifact from build container
 COPY --from=build /build/target/release/apheleia /apheleia
 
-CMD ["/apheleia", "--no-auth"]
+CMD ["/apheleia"]

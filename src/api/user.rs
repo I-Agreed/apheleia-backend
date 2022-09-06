@@ -10,7 +10,8 @@ use crate::{
     Result, Root,
 };
 
-use actix_web::{delete, get, post, web, HttpResponse, Responder};
+use actix_http::StatusCode;
+use actix_web::{delete, get, post, options, web, HttpResponse, Responder};
 use diesel::{ExpressionMethods, QueryDsl};
 use serde::{Deserialize, Serialize};
 
@@ -18,13 +19,19 @@ pub(crate) fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(get_user)
         .service(add_user)
         .service(add_user_role)
-        .service(delete_user_role);
+        .service(delete_user_role)
+        .service(preflight);
 }
 
 #[derive(Clone, Debug, Serialize)]
 #[cfg_attr(test, derive(Eq, PartialEq, Deserialize))]
 struct GetUserResponse {
     roles: Vec<Id<id::Role>>,
+}
+
+#[options("/{x:.*}")]
+async fn preflight(_: web::Path<String>) -> HttpResponse {
+    HttpResponse::Ok().finish()
 }
 
 #[get("/users/{id}")]
