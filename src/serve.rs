@@ -5,7 +5,8 @@ use crate::{
     Error, FuncReturn, Result,
 };
 
-use actix_web::{middleware, web::Data, App, HttpServer};
+use actix_http::header::{HeaderName, HeaderValue};
+use actix_web::{dev::Service, middleware, web::Data, App, HttpServer};
 use diesel::{
     pg::PgConnection,
     r2d2::{ConnectionManager, Pool},
@@ -51,6 +52,17 @@ where
             .wrap(middleware::Compress::default())
             .wrap(middleware::Logger::default())
             .wrap(cors)
+            .wrap_fn(|req, srv| {
+                let fut = srv.call(req);
+                async {
+                    let mut res = fut.await?;
+                    res.headers_mut().insert(
+                        HeaderName::from_static("access-control-allow-origin"),
+                        HeaderValue::from_static("*"),
+                    );
+                    Ok(res)
+                }
+            })
             .configure(crate::api::config)
     })
     .bind("0.0.0.0:8000")

@@ -10,7 +10,6 @@ use crate::{
     Result, Root,
 };
 
-use actix_http::StatusCode;
 use actix_web::{delete, get, post, options, web, HttpResponse, Responder};
 use diesel::{ExpressionMethods, QueryDsl};
 use serde::Serialize;
